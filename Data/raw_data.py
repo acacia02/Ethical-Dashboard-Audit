@@ -1,4 +1,6 @@
 import pandas as pd
+import matplotlib.pyplot as plt
+
 
 # loading and inspecting demographics data
 demo_df = pd.read_sas('DEMO_J.xpt', format='xport')
@@ -84,4 +86,18 @@ rename_dict = {
 
 # renaming the columns
 df.rename(columns=rename_dict, inplace=True)
-df.columns
+# print(df.columns)
+# print(df.describe())
+# print(df.isnull().sum())
+# print(df.head())
+
+
+# filling the "Poverty_Income_Ration" NaN's with the median
+median_pir = df["Poverty_Income_Ratio"].median()
+df["Poverty_Income_Ratio"] = df["Poverty_Income_Ratio"].fillna(median_pir)
+
+
+# the low values <= 0.01 are possible placeholders
+print((df['Poverty_Income_Ratio'] <= 0.01).sum())
+df['PIR_Flagged_Low'] = df['Poverty_Income_Ratio'] <= 0.01
+
