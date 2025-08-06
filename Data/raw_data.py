@@ -98,6 +98,8 @@ df["Poverty_Income_Ratio"] = df["Poverty_Income_Ratio"].fillna(median_pir)
 
 
 # the low values <= 0.01 are possible placeholders
-print((df['Poverty_Income_Ratio'] <= 0.01).sum())
 df['PIR_Flagged_Low'] = df['Poverty_Income_Ratio'] <= 0.01
 
+# print(df["Age"].describe())
+print(df["Age"].isna().sum())
+# print(df["Age"].value_counts(dropna=False))
