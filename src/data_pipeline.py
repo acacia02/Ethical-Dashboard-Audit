@@ -1,19 +1,6 @@
+from pathlib import Path
 import pandas as pd
-import matplotlib.pyplot as plt
-
-
-# loading and inspecting demographics data
-demo_df = pd.read_sas('DEMO_J.xpt', format='xport')
-
-
-# loading and inspecting diabetes data
-diq_df = pd.read_sas("DIQ_J.xpt", format='xport')
-
-
-df = pd.merge(demo_df, diq_df, on="SEQN", how="inner")
-df.shape
-# df.info()
-# df.isna().sum().sort_values(ascending=False)
+from src.clean_utils import clean_categorical, clean_numeric
 
 diabetes_keep = [
     'SEQN',    
@@ -44,20 +31,16 @@ demographics_keep = [
     "INDFMPIR"      # Poverty-income ratio (gold standard for SES)
 ]
 
+def load_merge_raw(raw_dir: str) -> pd.DataFrame:
+    raw = Path(raw_dir)
+    demo = pd.read_sas(raw / "DEMO_J.xpt", format="xport")
+    diq  = pd.read_sas(raw / "DIQ_J.xpt",  format="xport")
+    df   = pd.merge(diq, demo, on="SEQN", how="inner")
+    return df
 
-# merging both lists cleanly (and avoiding duplication of SEQN)
-columns_to_keep = list(set(diabetes_keep + demographics_keep))
-
-# now making the dataframe only relevant columns (columns_to_keep)
-df = df[columns_to_keep]
-
-# sorting columns to keep diabetes and demographics grouped separately
-df = df[demographics_keep + diabetes_keep[1:]]
-
-
-# renaming columns for clarity
-rename_dict = {
-    # Demographics
+def rename_columns(df: pd.DataFrame) -> pd.DataFrame:
+    rename = {
+        # Demographics
     "SEQN": "ID",
     "RIAGENDR": "Gender",
     "RIDAGEYR": "Age",
@@ -81,25 +64,23 @@ rename_dict = {
     "DIQ291": "Target_A1C_Value",
     "DIQ360": "Eye_Exam_Last_Year",
     "DIQ080": "Vision_Affected_by_Diabetes"
-}
+    }
+    return df.rename(columns=rename)
 
+def clean_columns(df: pd.DataFrame) -> pd.DataFrame:
+    # categorical
+    if "Country_of_Birth" in df: df["Country_of_Birth"] = clean_categorical(df["Country_of_Birth"], missing_codes={77,99})
+    # add others as you go: Race_Ethnicity, Education, etc.
 
-# renaming the columns
-df.rename(columns=rename_dict, inplace=True)
-# print(df.columns)
-# print(df.describe())
-# print(df.isnull().sum())
-# print(df.head())
+    # numerical
+    if "Age" in df: df["Age"] = clean_numeric(df["Age"])
+    if "Poverty_Income_Ratio" in df:
+        df["Poverty_Income_Ratio"] = clean_numeric(df["Poverty_Income_Ratio"], missing_codes={77,99})
+    # add BMI, A1C, etc.
+    return df
 
-
-# filling the "Poverty_Income_Ration" NaN's with the median
-median_pir = df["Poverty_Income_Ratio"].median()
-df["Poverty_Income_Ratio"] = df["Poverty_Income_Ratio"].fillna(median_pir)
-
-
-# the low values <= 0.01 are possible placeholders
-df['PIR_Flagged_Low'] = df['Poverty_Income_Ratio'] <= 0.01
-
-# print(df["Age"].describe())
-print(df["Age"].isna().sum())
-# print(df["Age"].value_counts(dropna=False))
+def build_processed(raw_dir: str) -> pd.DataFrame:
+    df = load_merge_raw(raw_dir)
+    df = rename_columns(df)
+    df = clean_columns(df)
+    return df
