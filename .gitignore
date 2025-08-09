@@ -211,3 +211,4 @@ __marimo__/
 data/raw/*
 data/processed/*
 backup/*
+reports/*
