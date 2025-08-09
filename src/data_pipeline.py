@@ -1,6 +1,8 @@
 from pathlib import Path
 import pandas as pd
 from src.clean_utils import clean_categorical, clean_numeric
+from src import mappings
+
 
 # configuring/setting threshold for dropping "missing"
 reports_path = Path("reports")
@@ -163,31 +165,79 @@ def drop_high_missing(df, threshold, must_keep):
     if drop_cols:
         df = df.drop(columns=drop_cols)
     
-    print(f"Dropped columns: {drop_cols if drop_cols else 'None'}")
-    if kept_over:
-        print(f"Kept (over threshold): {kept_over}")
+    # print(f"Dropped columns: {drop_cols if drop_cols else 'None'}")
+    # if kept_over:
+    #     print(f"Kept (over threshold): {kept_over}")
 
     return df
 
 
+
+# applying mapping for unusal or special rows
+def apply_code_mappings(df: pd.DataFrame) -> pd.DataFrame:
+    # Columns I do map
+    categorical_maps = {
+        "Race_Ethnicity": mappings.race_map,
+        "Gender": mappings.gender_map,
+        "Takes_Insulin": mappings.insulin_map,
+        "Country_of_Birth": mappings.birth_country_map,
+        "Diabetes_Diagnosed": mappings.diabetes_diagnosis_map,
+        "Citizenship_Status": mappings.citizenship_map,
+        "Prediabetes_Diagnosed": mappings.prediabetes_diagnosed_map,
+        "Marital_Status": mappings.marital_status_map,
+        "Education_Level": mappings.education_level_map,
+    }
+
+    # apply mappings 
+    for col, m in categorical_maps.items():
+        if col in df.columns:
+            orig = df[col]
+            df[col] = orig.map(m)  
+
+            # quick print check for any codes that didn’t map
+            leftover = sorted(set(orig.dropna().unique()) - set(m.keys()))
+            if leftover:
+                print(f"[mapping] {col}: unmapped codes found - {leftover}")
+        else:
+            print(f"[mapping]: column not found - {col}")
+
+    # Numeric keeps: don’t map these
+    # ID, Age, Poverty_Income_Ratio, Family_Size stay numeric
+    # Add top-coded flag for age 80 = 80+
+    if "Age" in df.columns:
+        df["is_80_plus"] = df["Age"].eq(80)
+    if "Family_Size" in df.columns:
+        df["7_or_more"] = df["Family_Size"].eq(7)
+    if "Poverty_Income_Ratio" in df.columns:
+        df["pir_5_plus"] = df["Poverty_Income_Ratio"].eq(5)
+
+    return df
+
+
+# grouping funcitions together
 def build_processed(raw_dir: str) -> pd.DataFrame:
     df = load_merge_raw(raw_dir)
     df = restrict_columns(df, keep_cols) 
     df = rename_columns(df)
     df = clean_columns(df)
     df = drop_high_missing(df, threshold=threshold, must_keep=must_keep)
+    df = apply_code_mappings(df)
     return df
 
 
 if __name__ == "__main__":
     raw_data_dir = "data/raw"
-    df_clean = build_processed(raw_data_dir)
     out_path = "data/cleaned_dataset.csv"
-    df_clean.to_csv(out_path, index=False)
-    print(f"\nSaved cleaned data to {out_path}")
+
+    df_clean = build_processed(raw_data_dir)
+
+    # Toggle save (flip to True when you want a file)
+    save_output = False
+    if save_output:
+        df_clean.to_csv(out_path, index=False)
+        print(f"Saved cleaned data to {out_path}")
+
     print(f"Rows: {df_clean.shape[0]:,} | Cols: {df_clean.shape[1]:,}")
-
-
-
-
     
+
+
