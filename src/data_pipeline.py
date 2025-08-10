@@ -137,6 +137,8 @@ def clean_columns(df: pd.DataFrame) -> pd.DataFrame:
         df["Family_Size"] = clean_numeric(df["Family_Size"], missing_codes={"."})
     if "Poverty_Income_Ratio" in df:
         df["Poverty_Income_Ratio"] = clean_numeric(df["Poverty_Income_Ratio"], missing_codes={77,99})
+        df.loc[df["Poverty_Income_Ratio"].between(0, 0.001), "Poverty_Income_Ratio"] = 0
+        df["Poverty_Income_Ratio"] = df["Poverty_Income_Ratio"].clip(lower=0, upper=5)
     if "Age_at_Diagnosis" in df:
         df["Age_at_Diagnosis"] = clean_numeric(df["Age_at_Diagnosis"], missing_codes={777,999})
     if "Doctor_Visits_Last_Year" in df:
@@ -221,7 +223,23 @@ def build_processed(raw_dir: str) -> pd.DataFrame:
     df = rename_columns(df)
     df = clean_columns(df)
     df = drop_high_missing(df, threshold=threshold, must_keep=must_keep)
+    # Numeric fills
+    for col in ["Poverty_Income_Ratio", "Age"]:
+        if col in df.columns:
+            df[col] = df[col].fillna(df[col].median())
+
+    # Map codes - labels
     df = apply_code_mappings(df)
+
+    # fill categoricals with "Unknown"
+    cat_fill = [
+        "Education_Level", "Marital_Status", "Prediabetes_Diagnosed",
+        "Citizenship_Status", "Diabetes_Diagnosed", "Country_of_Birth", "Takes_Insulin"
+    ]
+    for col in cat_fill:
+        if col in df.columns:
+            df[col] = df[col].fillna("Unknown")
+
     return df
 
 
@@ -232,12 +250,29 @@ if __name__ == "__main__":
     df_clean = build_processed(raw_data_dir)
 
     # Toggle save (flip to True when you want a file)
-    save_output = False
+    save_output = True
     if save_output:
         df_clean.to_csv(out_path, index=False)
         print(f"Saved cleaned data to {out_path}")
 
     print(f"Rows: {df_clean.shape[0]:,} | Cols: {df_clean.shape[1]:,}")
-    
+    na_report = df_clean.isna().sum()
+    print("\nRemaining NaNs (nonzero only):")
+    print(na_report[na_report > 0].sort_values(ascending=False))
+
+
+
+
+# NaN report
+# core_cols = [
+#     "Education_Level", "Marital_Status", "Prediabetes_Diagnosed",
+#     "Poverty_Income_Ratio", "Age", "Citizenship_Status",
+#     "Diabetes_Diagnosed", "Country_of_Birth", "Takes_Insulin",
+#     "ID", "Gender", "Race_Ethnicity", "Family_Size"
+# ]
+# na_report = df_clean[core_cols].isna().sum()
+# na_report = na_report[na_report > 0].sort_values(ascending=False)
+# print(na_report)
+
 
 
