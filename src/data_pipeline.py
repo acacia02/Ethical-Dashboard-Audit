@@ -107,8 +107,6 @@ def clean_columns(df: pd.DataFrame) -> pd.DataFrame:
         df["Country_of_Birth"] = clean_categorical(df["Country_of_Birth"], missing_codes={"."})
     if "Citizenship_Status" in df:
         df["Citizenship_Status"] = clean_categorical(df["Citizenship_Status"], missing_codes={"."})
-    if "Years_in_US" in df:
-        df["Years_in_US"] = clean_categorical(df["Years_in_US"], missing_codes={"."})
     if "Education_Level" in df:
         df["Education_Level"] = clean_categorical(df["Education_Level"], missing_codes={"."})
     if "Marital_Status" in df:
@@ -119,18 +117,6 @@ def clean_columns(df: pd.DataFrame) -> pd.DataFrame:
         df["Prediabetes_Diagnosed"] = clean_categorical(df["Prediabetes_Diagnosed"], missing_codes={"."})
     if "Takes_Insulin" in df:
         df["Takes_Insulin"] = clean_categorical(df["Takes_Insulin"], missing_codes={"."})
-    if "Takes_Diabetes_Pills" in df:
-        df["Takes_Diabetes_Pills"] = clean_categorical(df["Takes_Diabetes_Pills"], missing_codes={"."})
-    if "A1C_Checked" in df:
-        df["A1C_Checked"] = clean_categorical(df["A1C_Checked"], missing_codes={"."})
-    if "Target_A1C_Value" in df:
-        df["Target_A1C_Value"] = clean_categorical(df["Target_A1C_Value"], missing_codes={"."})
-    if "Eye_Exam_Last_Year" in df:
-        df["Eye_Exam_Last_Year"] = clean_categorical(df["Eye_Exam_Last_Year"], missing_codes={"."})
-    if "Vision_Affected_by_Diabetes" in df:
-        df["Vision_Affected_by_Diabetes"] = clean_categorical(df["Vision_Affected_by_Diabetes"], missing_codes={"."})
-
-    
     # numerical
     if "Age" in df:
         df["Age"] = clean_numeric(df["Age"])
@@ -140,12 +126,7 @@ def clean_columns(df: pd.DataFrame) -> pd.DataFrame:
         df["Poverty_Income_Ratio"] = clean_numeric(df["Poverty_Income_Ratio"], missing_codes={"."})
         df.loc[df["Poverty_Income_Ratio"].between(0, 0.001), "Poverty_Income_Ratio"] = 0
         df["Poverty_Income_Ratio"] = df["Poverty_Income_Ratio"].clip(lower=0, upper=5)
-    if "Age_at_Diagnosis" in df:
-        df["Age_at_Diagnosis"] = clean_numeric(df["Age_at_Diagnosis"], missing_codes={"."})
-    if "Doctor_Visits_Last_Year" in df:
-        df["Doctor_Visits_Last_Year"] = clean_numeric(df["Doctor_Visits_Last_Year"], missing_codes={"."})
-    if "Last_A1C_Value" in df:
-        df["Last_A1C_Value"] = clean_numeric(df["Last_A1C_Value"], missing_codes={"."})
+    
     return df
 
 
@@ -174,7 +155,7 @@ def drop_high_missing(df, threshold, must_keep):
 
     return df
 
-DO_NOT_TOUCH = {"ID", "Age", "Family_Size", "Poverty_Income_Ratio"}
+do_not_touch = {"ID", "Age", "Family_Size", "Poverty_Income_Ratio"}
 def _is_cat(s: pd.Series) -> bool:
     return isinstance(s.dtype, CategoricalDtype)
 
@@ -189,29 +170,29 @@ def apply_code_mappings(df: pd.DataFrame) -> pd.DataFrame:
     if "Poverty_Income_Ratio" in df.columns:
         df["pir_5_plus"] = df["Poverty_Income_Ratio"].eq(5)
 
-    COMMON_UNKNOWN_CODES = {7, 9, 77, 99, 777, 999, 7777, 9999}
-    CAT_COLS = [
+    common_unknown_codes = {7, 9, 77, 99, 777, 999, 7777, 9999}
+    cat_cols = [
         "Education_Level","Marital_Status","Prediabetes_Diagnosed",
         "Citizenship_Status","Diabetes_Diagnosed","Country_of_Birth",
         "Takes_Insulin","Gender","Race_Ethnicity"
     ]
 
-    # 0) force CAT cols to object (so strings are allowed); do NOT touch numeric keepers
-    for col in CAT_COLS:
-        if col in df.columns and col not in DO_NOT_TOUCH:
+    # force cat cols to object (so strings are allowed); do NOT touch numeric keepers
+    for col in cat_cols:
+        if col in df.columns and col not in do_not_touch:
             df[col] = df[col].astype("object")
 
-    # 1) any value that numerically equals an UNKNOWN_CODE -> "Unknown"
-    for col in CAT_COLS:
-        if col in df.columns and col not in DO_NOT_TOUCH:
+    # any value that numerically equals an common_unknown_code = "Unknown"
+    for col in cat_cols:
+        if col in df.columns and col not in do_not_touch:
             s = df[col]
             # cast to numeric just for the mask; non-numeric -> NaN
             as_num = pd.to_numeric(s, errors="coerce")
-            mask = as_num.isin(COMMON_UNKNOWN_CODES)
+            mask = as_num.isin(common_unknown_codes)
             s = s.where(~mask, "Unknown")
             df[col] = s
 
-    # 2) apply label maps
+    # apply label maps
     categorical_maps = {
         "Race_Ethnicity": mappings.race_map,
         "Gender": mappings.gender_map,
@@ -224,15 +205,15 @@ def apply_code_mappings(df: pd.DataFrame) -> pd.DataFrame:
         "Education_Level": mappings.education_level_map,
     }
     for col, m in categorical_maps.items():
-        if col in df.columns and col not in DO_NOT_TOUCH:
+        if col in df.columns and col not in do_not_touch:
             # support int/float/str keys
             m_float = {float(k): v for k, v in m.items() if isinstance(k, (int, float))}
             m_str   = {str(k): v for k, v in m.items()}
             df[col] = df[col].replace({**m, **m_float, **m_str})
 
-    # 3) true missing (from ".") -> "Not Asked", finalize as category
-    for col in CAT_COLS:
-        if col in df.columns and col not in DO_NOT_TOUCH:
+    # true missing (from ".") - "Not Asked", finalize as category
+    for col in cat_cols:
+        if col in df.columns and col not in do_not_touch:
             s = df[col].fillna("Not Asked").astype("category")
             # ensure both buckets exist even if absent
             if "Unknown" not in s.cat.categories:
@@ -262,41 +243,19 @@ def build_processed(raw_dir: str) -> pd.DataFrame:
     
 
     # fill categoricals with "Unknown"
-    CAT_COLS = [
+    cat_cols = [
     "Education_Level","Marital_Status","Prediabetes_Diagnosed",
     "Citizenship_Status","Diabetes_Diagnosed","Country_of_Birth",
     "Takes_Insulin","Gender","Race_Ethnicity"
     ]
-    # Diagnose any “categoricals” that are still numeric
-    bad = [c for c in CAT_COLS if c in df.columns and df[c].dtype.kind in "ifbu"]
+    # find any “categoricals” that are still numeric
+    bad = [c for c in cat_cols if c in df.columns and df[c].dtype.kind in "ifbu"]
     if bad:
-        print("[warn] Categorical columns with numeric dtype:", {c: df[c].dtype for c in bad})
+        print({c: df[c].dtype for c in bad})
         for c in bad:
-            df[c] = df[c].astype("object")   # flip them to object so strings are allowed
-    # Now do the fills safely
-    # for c in CAT_COLS:
-    #     if c in df.columns and df[c].dtype.name in ("object","category"):
-    #         df[c] = df[c].fillna("Not Asked").astype("category")
-
-        # --- quick categorical audit ---
-    # CAT_COLS = [
-    # "Education_Level","Marital_Status","Prediabetes_Diagnosed",
-    # "Citizenship_Status","Diabetes_Diagnosed","Country_of_Birth",
-    # "Takes_Insulin","Gender","Race_Ethnicity"
-    # ]
-    # BAD_CODES = {7, 9, 77, 99, 777, 999, 7777, 9999}
-    
-    # for col in CAT_COLS:
-    #     if col in df.columns:
-    #         print(f"\n--- {col} ---")
-    #         # show top categories quickly
-    #         print(df[col].value_counts(dropna=False).head(10))
-    #         # red/green flag
-    #         bad = set(df[col].unique()) & BAD_CODES
-    #         print("✅ OK" if not bad else f"❌ found raw codes: {bad}")
-# --- end audit ---
-
-
+            df[c] = df[c].astype("object")   
+            # flip them to object so strings are allowed
+   
 
     return df
 
@@ -321,16 +280,6 @@ if __name__ == "__main__":
 
 
 
-# NaN report
-# core_cols = [
-#     "Education_Level", "Marital_Status", "Prediabetes_Diagnosed",
-#     "Poverty_Income_Ratio", "Age", "Citizenship_Status",
-#     "Diabetes_Diagnosed", "Country_of_Birth", "Takes_Insulin",
-#     "ID", "Gender", "Race_Ethnicity", "Family_Size"
-# ]
-# na_report = df_clean[core_cols].isna().sum()
-# na_report = na_report[na_report > 0].sort_values(ascending=False)
-# print(na_report)
 
 
 
