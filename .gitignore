@@ -212,3 +212,8 @@ data/raw/*
 data/processed/*
 backup/*
 reports/*
+# Model artifacts
+models/*.joblib
+models/*.pkl
+models/*
+
