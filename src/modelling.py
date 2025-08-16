@@ -39,15 +39,7 @@ X_train, X_test, y_train, y_test = train_test_split(
 )
 
 
-# getting rid of duplicates 
-# coef_df = pd.DataFrame({"feature": X.columns, "beta": lr.coef_.ravel()})
-# coef_df["odds_ratio"] = np.exp(coef_df["beta"])
-# coef_df = coef_df.drop_duplicates(subset="feature")
-# print(coef_df.sort_values("odds_ratio", ascending=False).head(10).to_string(index=False))
-# print(coef_df.sort_values("odds_ratio").head(10).to_string(index=False))
-
-
-# Pipeline: scale -> logistic
+# Pipeline: scale to logistic
 pipe = make_pipeline(
     StandardScaler(with_mean=False),  # safe for sparse-ish/dummy-heavy matrices
     LogisticRegression(max_iter=2000, class_weight="balanced", n_jobs=None) # class_weight="balanced" added to make the prediction more precise
@@ -65,16 +57,15 @@ f1s = [f1_score(y_test, (y_prob >= t).astype(int)) for t in thr]
 best_idx = int(np.argmax(f1s))
 best_thr = float(thr[best_idx])
 print(f"\n[Tuned Threshold] {best_thr:.3f}")
-print(f"Precision @ tuned: {prec[best_idx]:.3f}")
-print(f"Recall @ tuned: {rec[best_idx]:.3f}")
-print(f"F1 @ tuned: {f1s[best_idx]:.3f}")
+print(f"Precision tuned: {prec[best_idx]:.3f}")
+print(f"Recall tuned: {rec[best_idx]:.3f}")
+print(f"F1 tuned: {f1s[best_idx]:.3f}")
 
 
 # printing reports
 print(f"[PR AUC] {average_precision_score(y_test, y_prob):.3f}")
 print("\n[Classification Report]")
 print(classification_report(y_test, y_pred, digits=3))
-
 print(f"[ROC AUC] {roc_auc_score(y_test, y_prob):.3f}")
 
 # Coefficients to Odds Ratios (for interpretation)
@@ -104,7 +95,7 @@ print(coef_df.sort_values('odds_ratio').head(10).to_string(index=False))
 Path("models").mkdir(parents=True, exist_ok=True)
 import joblib
 joblib.dump(pipe, "models/logistic_baseline.joblib")
-print("\nSaved -> models/logistic_baseline.joblib")
+print("\nSaved - models/logistic_baseline.joblib")
 
 
 
