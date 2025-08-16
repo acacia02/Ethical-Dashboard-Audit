@@ -207,13 +207,28 @@ marimo/_lsp/
 __marimo__/
 
 # project-specific ignores
-# Project-specific ignores
-data/raw/*
-data/processed/*
-backup/*
-reports/*
-# Model artifacts
-models/*.joblib
-models/*.pkl
-models/*
+# data
+data/raw/**
+data/processed/**
+!data/README.md
+
+# heavy / noisy outputs
+reports/**
+!reports/app/**
+
+# models (keep only if the app needs them)
+models/**
+!models/README.md
+
+# notebooks checkpoints, caches
+**/.ipynb_checkpoints/**
+__pycache__/
+*.pyc
+
+# local env / IDE
+.venv/
+venv/
+.env
+.vscode/
+
 

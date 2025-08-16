@@ -33,7 +33,7 @@ for c in num:
 print(df.isna().sum().sort_values(ascending=False).head(10))
 
 # Save this as the base for the next steps (encoding/scaling)
-# out_path = "data/model_step_missingness.csv"
-# df.to_csv(out_path, index=True)
-# print(f"\nSaved -> {out_path} | Rows: {df.shape[0]:,} | Cols: {df.shape[1]:,}")
+out_path = "data/model_step_missingness.csv"
+df.to_csv(out_path, index=True)
+print(f"\nSaved -> {out_path} | Rows: {df.shape[0]:,} | Cols: {df.shape[1]:,}")
 
