@@ -212,3 +212,61 @@ if insights:
         st.markdown(f"- {line}")
 else:
     st.info("No insights yet — make sure fairness CSVs and model JSONs are present in `reports/app/`.")
+
+
+
+
+
+
+
+
+
+
+import sqlite3
+import pandas as pd
+import streamlit as st
+
+st.header("SQL Data Explorer")
+
+# Connect to database
+con = sqlite3.connect("data/database/nhanes.db")
+
+# query: count participants by Race
+sql = """
+SELECT Race_Ethnicity, COUNT(*) AS n
+FROM nhanes
+GROUP BY Race_Ethnicity
+ORDER BY n DESC;
+"""
+
+df_sql = pd.read_sql_query(sql, con)
+con.close()
+
+# Show SQL code
+st.code(sql, language="sql")
+
+# show results in table
+st.write("**Results:**")
+st.dataframe(df_sql, use_container_width=True)
+
+# visualization
+st.bar_chart(df_sql.set_index("Race_Ethnicity")["n"])
+
+
+
+# same thing for Marital Status
+st.subheader("Participants by Marital Status")
+
+con = sqlite3.connect("data/database/nhanes.db")
+sql2 = """
+SELECT Marital_Status, COUNT(*) AS n
+FROM nhanes
+GROUP BY Marital_Status
+ORDER BY n DESC;
+"""
+df_sql2 = pd.read_sql_query(sql2, con)
+con.close()
+
+st.code(sql2, language="sql")
+st.dataframe(df_sql2, use_container_width=True)
+st.bar_chart(df_sql2.set_index("Marital_Status")["n"])
