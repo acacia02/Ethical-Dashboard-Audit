@@ -8,7 +8,9 @@ st.title("Ethical Audit Dashboard")
 st.caption("Evaluating diabetes risk models and fairness on NHANES")
 
 # Paths
-P = Path("reports/app")
+APP_DIR = Path(__file__).resolve().parent
+ROOT    = APP_DIR.parent
+P       = ROOT / "reports" / "app"
 CMP_CSV = P / "model_comparison.csv"
 
 LR_JSON  = P / "logistic_calibrated.json"
