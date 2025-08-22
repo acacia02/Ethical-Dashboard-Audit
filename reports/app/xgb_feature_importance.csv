@@ -1,0 +1,18 @@
+feature,importance
+Marital_Status_NotAsked,0.16835174
+Age,0.14105308
+Education_Level,0.102428235
+Marital_Status_Never married,0.046874125
+Family_Size,0.046781138
+Poverty_Income_Ratio,0.045071665
+Race_Ethnicity_Other/Multiracial,0.044196125
+Marital_Status_Living with a partner,0.0439332
+Gender_Male,0.043513738
+Citizenship_Status_Not a citizen,0.042742725
+Marital_Status_Married,0.04258721
+Race_Ethnicity_Non-Hispanic White,0.041429445
+Race_Ethnicity_Other Hispanic,0.0396368
+Race_Ethnicity_Non-Hispanic Black,0.039337397
+Country_of_Birth_Born in the US,0.037741147
+Marital_Status_Widowed,0.03749535
+Marital_Status_Separated,0.036826808

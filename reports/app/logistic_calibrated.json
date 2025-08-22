@@ -1,0 +1,16 @@
+{
+  "model": "logistic_calibrated",
+  "roc_auc": 0.8387687446676211,
+  "pr_auc": 0.2950639998741066,
+  "threshold": 0.2034487356413767,
+  "precision_tuned": 0.32439678284182305,
+  "recall_tuned": 0.6797752808988764,
+  "f1_tuned": 0.43920145190562615,
+  "support": {
+    "tn": 1302,
+    "fp": 252,
+    "fn": 57,
+    "tp": 121
+  },
+  "chosen_operating_threshold": 0.2034487356413767
+}

@@ -214,7 +214,9 @@ data/processed/**
 
 # heavy / noisy outputs
 reports/**
+!reports/app/
 !reports/app/**
+reports/other/
 
 # models (keep only if the app needs them)
 models/**
