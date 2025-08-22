@@ -23,6 +23,7 @@ XGB_ROC = P / "xgb_roc_curve.png"
 
 LR_ODDS = P / "lr_feature_odds.csv"
 XGB_FI  = P / "xgb_feature_importance.csv"
+PREVIEW = P / "df_model_ready.csv"
 
 FAIR = {
     ("Logistic","AgeGroup"):      P / "fairness_lr_age.csv",
@@ -108,7 +109,7 @@ with tab_features:
 
 with tab_data:
     st.subheader("Quick preview of inputs")
-    data_path = Path("data/processed/df_model_ready.csv")
+    data_path = Path("reports/app/df_model_ready.csv")
     if data_path.exists():
         df = load_df(data_path)
         st.dataframe(df.head(), use_container_width=True)
