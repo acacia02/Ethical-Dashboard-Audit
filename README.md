@@ -1,5 +1,8 @@
 Ethical Audit Dashboard – NHANES Diabetes Data
 
+LIVE APP: https://ethical-dashboard-audit-5gxmqnfgpfyvz8legetjcx.streamlit.app/
+GITHUB REPO: You’re already here!
+
 This project is part of a personal initiative to explore fairness and subgroup disparities in diabetes diagnosis and care using U.S. NHANES data.
 The goal is to build a dashboard that makes it easy to see how race, gender, income, education, and other social factors might influence who gets diagnosed, treated, or monitored for diabetes.
 
@@ -27,5 +30,3 @@ Limitations / Next Steps:
 - Education levels are currently coded numerically for modeling purposes
 - Future improvement: external data hosting (cloud storage or HuggingFace Datasets) for cleaner repo size
 
-LIVE APP: https://ethical-dashboard-audit-5gxmqnfgpfyvz8legetjcx.streamlit.app/
-GITHUB REPO: You’re already here!
